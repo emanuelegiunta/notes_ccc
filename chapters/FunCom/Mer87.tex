@@ -1,0 +1,86 @@
+\subsection{Merkle Trees}
+Perhaps the most well known example of Vector Commitment are Merkle-Trees \cite{C:Merkle87}. Here we quickly revise their construction and show general properties.
+The core idea is to arrange the vector into the leaves of a (binary) tree and place into each node the hash of it child, for a given hash function $h$.
+A commitment is then the tree's root, while an opening consists of the values stored in a co-path (i.e. the siblings of all nodes in the path) to the given position. Although a description is presented in Figure~\ref{prot:Mer87}, a picture better illustrates the idea, see Figure~\EG{ref!}.
+
+\begin{figure}[htb]
+\centering
+\begin{pcarray}{ll}
+	\algorithm{
+		$\cd{VC.Gen}(1^\secp, n):$
+		}
+		{
+			Sample $h$ a collision resistant hash 
+				\\
+			\textbf{Return} $\ppm = h$
+ 		}
+		\\
+	\algorithm{
+		$\cd{VC.Com}(h, m_1, \ldots, m_n):$
+		}
+		{
+			Set $y_{\cd{bin}(i)} \gets m_i$ for $i \in \{1, \ldots, n\}$
+				\\
+			\textbf{For} $\ell \in \{0, \ldots, \log_2 n - 1 \}$
+				\\
+			\t \textbf{For} $s \in \{0,1\}^\ell$:
+				\\
+			\t\t $y_{s} \gets h(y_{s|0}, \; y_{s|1})$
+				\\
+			$c \gets y_\varnothing$
+				\\
+			$\aux \gets \left\{y_s \: : \: s \in \{0,1\}^\ell, \; \ell \leq \log_2 n \right\}$
+				\\
+			\textbf{Return} $(c, \aux)$
+		}
+		&
+	\algorithm{
+		$\cd{VC.Open}(h, \aux, i):$
+		}
+		{
+			$(b_1, \ldots, b_{\log n}) \gets \cd{bin}(i)$
+				\\
+			$\pi \gets \varnothing$
+				\\
+			\textbf{For} $\ell \in \{1, \ldots, \log n\}$:
+				\\
+			\t $s \gets (b_1, \ldots, b_{\ell - 1}, b_\ell \oplus 1)$
+				\\
+			\t $\pi \gets \pi \cup \{y_s\}$
+				\\
+			\textbf{Return} $\pi$
+		}
+		\\
+	\algorithm{
+		$\cd{VC.Vfy}(h, c, i, m_i, \pi_i):$
+		}
+		{
+			$(b_1, \ldots, b_{\log n}) \gets \cd{bin}(i)$
+				\\
+			Set $y_{\cd{bin}(i)} \gets m_i$
+				\\
+			Retrieve $y_s$ from $\pi$
+				\\
+			\textbf{For} $\ell \in \{1, \ldots, \log n - 1\}$:
+				\\
+			\t $s \gets (b_1, \ldots, b_\ell)$
+				\\
+			\t $y_s \gets h(y_{s|0}, y_{s|1})$
+				\\
+			\textbf{Return} $c == h(y_0, y_1)$
+		}
+\end{pcarray}
+\caption{Merkle Tree \cite{C:Merkle87}. $\cd{bin}(i)$ is the binary representation of $i$, while $\varnothing$ denotes the empty string, i.e. $\{0,1\}^0 = \{\varnothing\}$.}
+\label{prot:Mer87}
+\end{figure}
+
+\begin{theorem}
+	\label{theo:Mer87}
+	If $h$ is a collision resistant hash function, then the construction in Figure~\ref{prot:Mer87} is a position binding Vector Commitment.
+\end{theorem}
+\begin{proof}
+	Let $\mathcal{A}(1^\secp, h)$ an adversary that produces $(c, m, \hat{m}, \pi, \hat{\pi}, i)$ such that $m \neq \hat{m}$ but both proofs verifies.
+	Then the can define $\mathcal{B}$ finding a collision for $h$.
+	The idea is simply to compute the verification procedure in parallel until we find a collision.
+	This must occur as initially we hash $m$ and the first element in $\pi$ (respectively $\hat{m}$ and the first element in $\hat{\pi}$) and eventually obtain from both computation $c$ because the proofs verifies correctly.
+\end{proof}
