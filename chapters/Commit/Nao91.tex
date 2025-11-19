@@ -1,0 +1,64 @@
+\subsection{Statistically Binding Commitment from PRGs}
+In \cite{JC:Naor91}, the first statistically binding commitment from OWF in the common random string model was presented. Let $G : \{0,1\}^\secp \to \{0,1\}^{3\secp}$ a PRG. Their commitment is presented in Figure~\ref{prot:Nao91:statisticall_binding_commitment_from_prg}. Recall that in the following for any bit $b \in \{0,1\}$ we denote $b^n = (b, \ldots, b) \in \{0,1\}^n$, and $\wedge$ is the bit-wise and between same-length strings.
+
+\begin{figure}[htb]
+	\centering
+	\begin{pcvstack}[center, space=10pt]
+	\begin{pchstack}[center, space=10pt]
+	\algorithm{
+		$\cd{Setup}(1^\secp)$
+		}
+		{
+			$r \rgets \{0,1\}^{3\secp}$
+				\\
+			$\crs \gets r$
+				\\
+			\textbf{Return} $\crs$
+		}
+	\algorithm{
+		$\cd{Com}(\crs, b)$
+		}
+		{
+			$s \rgets \{0,1\}^\secp$
+				\\
+			$c \gets G(s) \oplus (b^{3\secp} \wedge r)$
+				\\
+			\textbf{Return} $(c, s)$
+		}
+	\end{pchstack}
+	\begin{pchstack}
+	\algorithm{
+		$\cd{Vfy}(\crs, c, s, b)$
+		}
+		{
+			\textbf{Return} $c == G(s) \oplus (b^{3\secp} \wedge r)$
+		}
+	\end{pchstack}
+	\end{pcvstack}
+	\label{prot:Nao91:statisticall_binding_commitment_from_prg}
+	\caption{Statistically binding commitment to bits in \cite{JC:Naor91}.}
+\end{figure}
+
+\begin{theorem}
+	\label{theo:Nao91:statistically_binding_commitment_from_prg}
+	If $G : \{0,1\}^\secp \to \{0,1\}^{3\secp}$ is a secure PRG, then the commitment in Figure~\ref{prot:Nao91:statisticall_binding_commitment_from_prg} is a statistically binding and computationally hiding commitment. 
+\end{theorem}
+\begin{proof}
+	Hiding is proven through 4 hybrids. For any $\mathcal{A}$ in $\cd{H}_0$ it receives $G(s)$, in $\cd{H}_1$ a random string $c \rgets \{0,1\}^{3\secp}$, in $\cd{H}_2$ a string $c \oplus r$ and in $\cd{H}_3$ the string $G(s) \oplus r$. The first and last two are computationally indistinguishable since $G$ is a PRG while $\cd{H}_2, \cd{H}_3$ are identically distributed.
+	
+	For statistical binding, observe that a string $c$ admits two openings if and only if there exists $s_1, s_2$ such that $c = G(s_1)$ (which opens to $0$) and $c = G(s_2) \oplus r$ (which opens to $1$). Hence if and only if $\exists s_1, s_2 : G(s_1) \oplus G(s_2) = r$. Let $\cd{Bad}$ be such event. Then
+	\[
+		\prob{\cd{Bad}}
+			\; = \;
+		\prob{r \in \left\{G(s_1) \oplus G(s_2) \: : \: s_1, s_2 \in \{0,1\}^\secp\right\}}
+			\; \leq \;
+		\frac{2^{2\secp}}{2^{3\secp}}
+			\; = \;
+		2^{-\secp}.
+	\]
+	and if $\neg \cd{Bad}$ the commitment is perfectly binding.
+\end{proof}
+
+\paragraph{Asymptotical Rate-1.}
+The above commitment needs $3\secp$ bits to commit to a single bit. To commit to a large message $m \in \{0,1\}^n$ then, given $f : \{0,1\}^\secp \times \{0,1\}^\secp \to \{0,1\}$ a PRF (which exists from OWF), the following approach can be used.
+First, the PRF key $k$ is committed as above with $3 \secp^2$ bits. Then, $m$ is committed sending $f_k(i) \oplus m_i$, hence only requiring $3 \secp^2 + n$ bits in total.
